@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 4c -- FIXES AGAINST PHASE 4B RED-TEAM** (claude-2 done; claude-1 red-team of latency benchmark resolved in `12_claude2_redteam_fixes.md`)
+**Phase 5-PREP -- VALIDATE CROSS-SLICE FIXES** (claude-2 confirmed v2 recall harness catches mutation 7 in `13_claude2_signoff_validation.md`; ready for joint `11_joint_signoff.md`)
 
 ## Phase tracker
 
@@ -13,8 +13,9 @@
 | 3 -- Fix own slice | [DONE] `05_claude1_fixes.md` | [DONE] `06_claude2_fixes.md` | both done |
 | 4a -- Build tests harness | [DONE] `07_claude1_tests_recall.md` | [DONE] `08_claude2_tests_latency.md` | both done |
 | 4b -- Red-team tests | [DONE] `09_claude1_redteam_tests.md` | [DONE] `10_claude2_redteam_tests.md` | both done |
-| 4c -- Fixes against Phase 4b red-team | (cross-asks delivered to claude-1) | [DONE] `12_claude2_redteam_fixes.md` | claude-2 done; claude-1 optional follow-ups noted |
-| 5 -- Sign-off (joint) | `11_joint_signoff.md` (co-edited) | (co-edited) | pending |
+| 4c -- Fixes against Phase 4b red-team | [DONE] `09b_claude1_phase4b_fixes.md` (recall harness v2: 60 chunks + precision@6 + leg-coverage gates) | [DONE] `12_claude2_redteam_fixes.md` (latency benchmark v2: two-layer budgets + 7-check preflight) | both done |
+| 5-prep -- Validate cross-slice fixes | (validation by claude-2) | [DONE] `13_claude2_signoff_validation.md` (v2 recall harness catches mutation 7) | claude-2 done |
+| 5 -- Sign-off (joint) | `11_joint_signoff.md` (co-edited) | (co-edited) | pending (no blockers) |
 
 ## Seed inconsistencies (Phase 1 starting context)
 
