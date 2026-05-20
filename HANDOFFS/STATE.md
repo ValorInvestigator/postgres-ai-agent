@@ -2,14 +2,14 @@
 
 ## Current phase
 
-**Phase 1 -- AUDIT OWN SLICE**
+**Phase 2 -- RED-TEAM THE OTHER SLICE** (both Phase 1 audits landed)
 
 ## Phase tracker
 
 | Phase | Claude 1 handoff | Claude 2 handoff | Status |
 |-------|------------------|------------------|--------|
-| 1 -- Audit own slice | [DONE] `01_claude1_audit.md` | `02_claude2_audit.md` | claude-1 done; waiting on claude-2 |
-| 2 -- Red-team the other | `03_claude1_redteam_of_claude2.md` | `04_claude2_redteam_of_claude1.md` | pending |
+| 1 -- Audit own slice | [DONE] `01_claude1_audit.md` | [DONE] `02_claude2_audit.md` | both done |
+| 2 -- Red-team the other | `03_claude1_redteam_of_claude2.md` | `04_claude2_redteam_of_claude1.md` | in progress (claude-2 started) |
 | 3 -- Fix own slice | `05_claude1_fixes.md` | `06_claude2_fixes.md` | pending |
 | 4a -- Build tests harness | `07_claude1_tests_recall.md` | `08_claude2_tests_latency.md` | pending |
 | 4b -- Red-team tests | `09_claude1_redteam_tests.md` | `10_claude2_redteam_tests.md` | pending |
@@ -28,9 +28,11 @@ Both Claudes should incorporate these into their Phase 1 audit:
 ## Handoffs landed
 
 - `01_claude1_audit.md` (Phase 1, code slice, claude-1) -- landed 2026-05-20T08:15Z. 19 findings (5 high, 8 med, 6 low) + 4 asks of claude-2.
+- `02_claude2_audit.md` (Phase 1, docs slice, claude-2) -- landed 2026-05-20T08:20Z. 12 findings (2 high, 6 med, 4 low) + 3 cross-slice asks of claude-1.
 
 ## Active branches
 
-- `main` (scaffold + initial commit)
-- `build/claude-1` (Claude 1's worktree branch -- to be created)
-- `build/claude-2` (Claude 2's worktree branch -- to be created)
+- `main` (scaffold + Phase 1 audits)
+- `build/claude-1` (Claude 1's worktree branch)
+- `build/claude-2` (Claude 2's worktree branch -- worktree at `/home/levi/projects/repo-c2/`)
+- `04_claude2_redteam_of_claude1.md` (Phase 2, code slice red-team, claude-2) -- landed 2026-05-20T08:45Z. 8 net-new findings + confirmation of all 19 claude-1 self-flagged findings. 5 asks of claude-1.
