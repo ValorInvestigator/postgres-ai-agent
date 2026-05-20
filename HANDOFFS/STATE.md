@@ -2,7 +2,7 @@
 
 ## Current phase
 
-**Phase 4a -- BUILD TESTS HARNESS** (claude-1 shipped; claude-2 latency benchmark pending)
+**Phase 4b -- RED-TEAM TESTS** (claude-1 shipped; claude-2 red-team of claude-1's tests still pending)
 
 ## Phase tracker
 
@@ -11,8 +11,8 @@
 | 1 -- Audit own slice | [DONE] `01_claude1_audit.md` | [DONE] `02_claude2_audit.md` | both done |
 | 2 -- Red-team the other | [DONE] `03_claude1_redteam_of_claude2.md` | [DONE] `04_claude2_redteam_of_claude1.md` | both done |
 | 3 -- Fix own slice | [DONE] `05_claude1_fixes.md` | [DONE] `06_claude2_fixes.md` | both done; sync gate static checks PASS on each branch independently |
-| 4a -- Build tests harness | [DONE] `07_claude1_tests_recall.md` | `08_claude2_tests_latency.md` | claude-1 done; claude-2 pending |
-| 4b -- Red-team tests | `09_claude1_redteam_tests.md` | `10_claude2_redteam_tests.md` | pending |
+| 4a -- Build tests harness | [DONE] `07_claude1_tests_recall.md` | [DONE] `08_claude2_tests_latency.md` | both done |
+| 4b -- Red-team tests | [DONE] `09_claude1_redteam_tests.md` | `10_claude2_redteam_tests.md` | claude-1 done; claude-2 pending |
 | 5 -- Sign-off (joint) | `11_joint_signoff.md` (co-edited) | (co-edited) | pending |
 
 ## Seed inconsistencies (Phase 1 starting context)
@@ -34,6 +34,8 @@ Both Claudes should incorporate these into their Phase 1 audit:
 - `06_claude2_fixes.md` (Phase 3, docs slice fixes, claude-2) -- landed 2026-05-20T09:30Z (on origin/build/claude-2 @ 995a935). All 12 own + 9 claude-1 red-team findings resolved in a single commit. result_chunk_ids decided as BIGINT[]. 3-check sync gate proposed.
 - `05_claude1_fixes.md` (Phase 3, code slice fixes, claude-1) -- landed 2026-05-20T09:55Z (on build/claude-1). All 19 own + 8 claude-2 red-team findings resolved in a single commit. scripts/04 renamed to .example.sql. ACCEPTS the 3-check sync gate.
 - `07_claude1_tests_recall.md` (Phase 4a, recall harness + sync gate, claude-1) -- landed 2026-05-20T10:20Z (on build/claude-1). Shipped tests/fixtures/seed_corpus.sql + tests/recall_benchmark.sql + tests/run_recall.sh + tests/sync_check.sh. All 3 static sync checks PASS on build/claude-1. 4 asks of claude-2 for Phase 4b red-team.
+- `08_claude2_tests_latency.md` (Phase 4a, latency harness + tests/README.md, claude-2) -- landed 2026-05-20T10:45Z (on origin/build/claude-2 @ 5948ce8). Shipped tests/latency_benchmark.py (3 modes: vector_only / hybrid_rrf / hybrid_rrf_with_rerank stub) + tests/README.md (full harness docs). 4 asks of claude-1 for Phase 4b red-team.
+- `09_claude1_redteam_tests.md` (Phase 4b, red-team of claude-2's tests, claude-1) -- landed 2026-05-20T10:55Z (on build/claude-1). Net-new findings: 1 high (no GIN preflight), 5 med (budget calibration, rerank stub semantics, autocommit doc, HNSW preflight robustness, README prereq drift), 4 low. Live mutation results: 2/4 mutations caught (M1 + M4); M2 + M3 missed because 20-row corpus is too small. 5 asks of claude-2 + answers to claude-2's 4 asks.
 
 ## Active branches
 
