@@ -148,7 +148,7 @@ INSERT INTO case_test_seed.chunks (id, source_file_id, chunk_idx, content, embed
      '[0.00, 0.02, 0.95, 0.01, 0.00, 0.00, 0.01, 0.01]');
 
 -- ============================================================================
--- NOISE: orthogonal chunks (ids 19..20). Used as decoys.
+-- NOISE: orthogonal chunks (ids 19..20). Topically unrelated to any cluster.
 -- ============================================================================
 INSERT INTO case_test_seed.chunks (id, source_file_id, chunk_idx, content, embedding) VALUES
     (19, 4, 0,
@@ -157,6 +157,69 @@ INSERT INTO case_test_seed.chunks (id, source_file_id, chunk_idx, content, embed
     (20, 4, 1,
      'Photosynthesis converts light energy into chemical energy stored in glucose by chlorophyll-bearing organisms.',
      '[0.00, 0.00, 0.00, 0.00, 0.95, 0.00, 0.05, 0.00]');
+
+-- ============================================================================
+-- STRUCTURED DISTRACTORS (ids 21..30): keyword-bait with wrong-cluster embedding.
+-- These force the test to verify the vector + fts + trgm combination correctly
+-- DOWN-ranks a chunk that matches keywords but lives in the wrong cluster.
+-- Without these, a vector-only test passes even when fts/trgm legs are broken.
+-- ============================================================================
+INSERT INTO case_test_seed.chunks (id, source_file_id, chunk_idx, content, embedding) VALUES
+    -- 21..23: "civil rights" KEYWORDS but embedding on medical axis (dim 2)
+    (21, 4, 2,
+     'The civil rights handbook contains a chapter on patient privacy in the medical setting.',
+     '[0.00, 0.00, 0.92, 0.04, 0.02, 0.02, 0.00, 0.00]'),
+    (22, 4, 3,
+     'A civil rights complaint may include allegations of medical neglect against jail healthcare staff.',
+     '[0.00, 0.00, 0.91, 0.05, 0.02, 0.02, 0.00, 0.00]'),
+    (23, 4, 4,
+     'Civil rights training for nursing staff covers HIPAA and constitutional patient protections.',
+     '[0.00, 0.00, 0.90, 0.05, 0.03, 0.02, 0.00, 0.00]'),
+    -- 24..26: "probate" + "estate" KEYWORDS but embedding on civil-rights axis (dim 0)
+    (24, 4, 5,
+     'Probate of a civil rights plaintiff who died mid-litigation requires estate substitution under FRCP 25.',
+     '[0.91, 0.04, 0.02, 0.03, 0.00, 0.00, 0.00, 0.00]'),
+    (25, 4, 6,
+     'The estate of a section 1983 plaintiff may continue the civil rights action through the personal representative.',
+     '[0.92, 0.03, 0.02, 0.03, 0.00, 0.00, 0.00, 0.00]'),
+    (26, 4, 7,
+     'A probate court has no jurisdiction over a pending federal civil rights estate substitution.',
+     '[0.90, 0.05, 0.02, 0.03, 0.00, 0.00, 0.00, 0.00]'),
+    -- 27..29: "HIPAA" + "medical" KEYWORDS but embedding on probate axis (dim 1)
+    (27, 4, 8,
+     'A probate personal representative may sign a HIPAA release for the medical records of the decedent.',
+     '[0.00, 0.92, 0.04, 0.02, 0.02, 0.00, 0.00, 0.00]'),
+    (28, 4, 9,
+     'The estate inventory often includes the decedent HIPAA-protected medical bills as a liability.',
+     '[0.00, 0.91, 0.05, 0.02, 0.02, 0.00, 0.00, 0.00]'),
+    (29, 4, 10,
+     'A successor personal representative inherits the prior authority to receive HIPAA medical record disclosures.',
+     '[0.00, 0.90, 0.05, 0.03, 0.02, 0.00, 0.00, 0.00]'),
+    -- 30: pure noise but with a token that overlaps trigrams (small distractor)
+    (30, 4, 11,
+     'The civic right to assemble at the rights-of-way along the audit trail of the medical district is unrelated.',
+     '[0.00, 0.00, 0.00, 0.30, 0.30, 0.30, 0.05, 0.05]');
+
+-- ============================================================================
+-- RANDOM NOISE (ids 31..60): 30 chunks with embeddings biased to dims 5-7 and
+-- unrelated content. Pure padding to make final_k=10 selective on a 60-chunk
+-- candidate pool (was 20).
+-- ============================================================================
+INSERT INTO case_test_seed.chunks (id, source_file_id, chunk_idx, content, embedding)
+SELECT
+    30 + gs,
+    4,
+    11 + gs,
+    'Random padding chunk number ' || gs || ' about geology stratigraphy oceanography climatology meteorology phenology.',
+    -- embeddings biased to dims 5-7 with small jitter
+    format('[0, 0, 0, %s, %s, %s, %s, %s]',
+        round((random() * 0.05)::numeric, 3),
+        round((random() * 0.05)::numeric, 3),
+        round((0.85 + random() * 0.10)::numeric, 3),
+        round((random() * 0.10)::numeric, 3),
+        round((random() * 0.10)::numeric, 3)
+    )::vector(8)
+FROM generate_series(1, 30) gs;
 
 SELECT setval(pg_get_serial_sequence('case_test_seed.chunks', 'id'),
               (SELECT max(id) FROM case_test_seed.chunks));
@@ -195,3 +258,6 @@ FROM case_test_seed.chunks c
 JOIN case_test_seed.source_files sf ON sf.id = c.source_file_id
 GROUP BY sf.cluster
 ORDER BY sf.cluster;
+
+-- Total chunk count (should be 60 = 6+6+6 clusters + 2 noise + 10 structured distractors + 30 padding)
+SELECT COUNT(*) AS total_chunks FROM case_test_seed.chunks;
