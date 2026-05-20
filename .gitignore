@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local secrets / keys -- NEVER commit
+*.key
+*.pem
+.env
+.env.*
+!.env.example
+keys/
+secrets/
+
+# Local PG dumps + test data
+*.sql.gz
+*.dump
+test_data/
+
+# Logs
+*.log
+logs/
+
+# Local notes that should not be public
+SCRATCH.md
+NOTES_LOCAL.md

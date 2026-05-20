@@ -1,0 +1,27 @@
+# Gemini 3.1 Pro Deep Search
+
+**Topic:** vector_index
+**Question:** pgvector 0.8 best practices HNSW IVFFlat AI agents iterative index scan ef_search ef_construction m parameter tuning 2025
+**Model:** gemini-3.1-pro-preview
+**Generated:** 2026-05-19 23:46
+**Sources cited:** 11
+
+---
+
+
+
+---
+
+## Sources
+
+[src-1] [softmoa.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEJx8tytw4pzqL1eNq-odv8Tx6wLNSRCQrXgoTnnOEE6oZpunh0E_95I4OqMQGM7KAGtHbUmSWL0o6xP4gyG_cI4UE5zky4GsGHvt7yT1bIkL8is-RC-4F16C97bA==)
+[src-2] [mindstudio.ai](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFpUa4Uoq-0ULDxHuScC5C79lkPW9pjjFtihRRaWb257A7-mrS1vJcow7YSwEQJiGxVgL1CFOH2AYYK4JXoXn-1K7DtwEd_tiHI9fbd7Z3dYB_FOaNeu9QjBlmAdE3obWTSI8P-edzb5f4iGoECfG-x-fuNjCRmrivWCdLvMQ==)
+[src-3] [instaclustr.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFo8QUJwRmd4WQjUP0HI0YBVE0uGc83RCfeqyG_PiWm2_3T_MI2ViRqRea6AB4O1U8s2gIYgCz73mT5JE5Nrgc9zXXw-8B72NzogQWHs0rtrzRQ6XQ33pHwoP5Su4ZII_2RsOBkp0X0fMBhY5rnzZDS2rpkdO_EfXYt9tr6PhNqDzDcvWbDfj_YYCRhWiCQRl76mAiyyEgHL5u_muDDhPJHL6lWvkilv2fn_FucuDU=)
+[src-4] [pgedge.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8GiCWSo55qlfmhsN-Td-vAj6vTbaLs8DADwaA1bYVkO_u7WCBuLkibWKGA17QarEv4uF2K047zua3PGBtZGlGy0xlX7kLIbu4w7KZ5ZQFetLHkraQCHzY9mGDkj1bd5NsZ7K0TR4P2tmPh4fJABujc1DHgaPUVivOotxQHZGnWM0U9A-geqamnbt-MIA_eSTEd0nfTTe95t_uMjiiQQfg)
+[src-5] [amazon.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEvuHQml3pLSFXv5AhLgwWW9YwJBHE-ZCoebOsYhIG5IFoQVBKpTVNmYRwNct1NNDAiXo6VR9i8x1Xhtr00EMiibqS69Ucs9xpmXdZ9SqYqclXIEM8mVOz9JQEJuLZ1qLa_a5J01LbEqczAnR443-_kzNT05mEpaP0Gan1li9k2qoLA0fAV1zx4Mf17pRMnzOu880YwraDyTVtr0z7sy0-7D3Pmk7XqduaTblLm9GHnUEVrAyLDK3ydaYAvcHTBkqVAXbCJVoIbcA==)
+[src-6] [postgresql.org](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmIBimuvbP_g52tGViggtNy9b-LqJxYtsDvVyMgXVvgs_EkFzshkmEKFXqs7vJam_z1ri179w7sR5x65_q0Y0F0EVe-EmF7ulYcxuADuMi-LM9VfGfXVWOkETszvyKxBHpnUsCXZSU-EVy7dy9UfDIsprmi_ojlEa9G0g5)
+[src-7] [javaguide.cn](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFm0j_epA9EJNvlp5VauW8RNLBA0EqqFDSZfDCaJqRQEph01ZZAYg_ez9un8MFqOAhEzISWXsFdgogpk-XiGauiLI_g1QSUIB8D0p6eotVE9si228TxlVsGniwL3rNVdzcFk1nwahnyvmF9jsU=)
+[src-8] [tistory.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFABGNhoajB9GvoFMUXVFvg3HpusY2CWmM71z5ZlNbiXIQAEZw3si-0hJ25w8z9XgZzc_ahNFEoONvVxGZW1NbjkbNNj2oYffb4OZz8V6ZOxIb9GCnEWex2HTW1eVf1XYlD9N9-HPsiC4fuGWZbqHW1LUIL4tbd86YXiTubJqrMgLZviFnn0DQUZt8Tg3YwXHOFR8XYLlP5EKh1nKG5gy-avlFgXnTbA10MM7tLkRHPP_MkXhgXXpDEdO2NG6Z75Ji4P1WqdF1_BT4N3nupYicgO_qtKznDhBHC_oLm4AoIgLN4aaoZQM9RquakCYey3DFGA6fyN0cvSkVRFoD3TBtlKoYhPf7Ev0yfh1xcFWL1POIE2SV2ih0tIfESZ5mSZBee5AJLrjczOXXvN1FP6VdouM4HcFqF0DQYLYxVEA==)
+[src-9] [dbi-services.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGeloNeOH9F_i9ovhNO2Q4THpln5JQiyyoARyXOgwiePWuiqlv7GuOQiQ9hbzTeWwQ5QldOTaGXjYKdRuHsONPP_dX5TormoPPVNp0jLWZsvNu7ymwM-MfIFT1j3s6Kr--7AqWtiZEypuV8ScJyfVMqNIM6posh4wYnbK9GCJtA2rALTbVAIesP0k1q3XkiTSaljfJ-Kax-)
+[src-10] [velodb.io](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpzy4NaPS59jgPOKEdUgh-QEEUY15lqYvmfw2hQQKtNmz17obMMJXNCfr05uRio-DWpjRPUwogwrnKj9Lo8s4UYDNWagc9FwTRDwAgWwqbeDanoHt4GuTa4b5n5LxJKEretVlQ-C0TFdXw)
+[src-11] [dbadataverse.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxPd9VS_u3avMcLOW23u7FGcHtRWkEMEtRHtRkXDYtudEzTK559tC-UFw279Jw04wviDsT_Hang0pudLrw6JL5B-keiXbwrQUsF0sTXR5tgPd4ux30qI3BkpNzc9wZrTC-TR7qzLtancnopHiMpzSnIrH21UV_ecfuUlbv2uDiKzW3KMBp5wH7IK6sofmU2ktiJo7btg==)
