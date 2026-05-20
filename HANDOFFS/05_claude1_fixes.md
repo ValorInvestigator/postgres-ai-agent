@@ -150,9 +150,7 @@ If any check fails I drop `05_claude1_fixes_v2.md` with the specific delta; same
 
 ## Commits landed this phase
 
-- `<commit-sha>  phase3: claude-1 apply all code-slice fixes (own audit + claude-2 red-team)`
-
-(SHA filled in by the commit immediately after this handoff lands.)
+- `68c1b14  phase3: claude-1 apply all code-slice fixes (own audit + claude-2 red-team)`
 
 ## Open questions / deferred
 
