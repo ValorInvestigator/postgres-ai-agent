@@ -106,13 +106,16 @@ SELECT * FROM corpus_registry;
 -- Run hybrid RRF (after embedding the query externally and passing as a vector literal).
 -- The function accepts an unsized `vector` parameter so it is portable across embedding
 -- models; the underlying chunks.embedding column determines the actual dimension.
-SELECT * FROM hybrid_rrf_search(
-  query_text => 'Carol Frederick attorney probate Bingaman',
-  query_vec  => :query_embedding::vector,
-  k          => 60,
-  per_leg    => 60,
-  rrf_k      => 60
-) LIMIT 20;
+-- target_schema has no default (required). Other defaults align to PLAYBOOK Section 2
+-- canonical: target_table='chunks', text_col='content', vec_col='embedding', chunk_id_col='id'.
+SELECT * FROM ops_search_agent.hybrid_rrf_search(
+  query_text    => 'Carol Frederick attorney probate Bingaman',
+  query_vec     => :query_embedding::vector,
+  target_schema => 'case_26cv11493_hearing_prep',
+  k_per_leg     => 60,
+  rrf_k         => 60,
+  final_k       => 20
+);
 ```
 
 ## Phased migration plan
