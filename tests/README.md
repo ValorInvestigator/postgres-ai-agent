@@ -12,14 +12,19 @@ All three exit non-zero on regression. They are designed to be wired into CI whe
 
 ## Prerequisites
 
-- Postgres 16 with `pgvector >= 0.8.0`, `pg_trgm`, `uuid-ossp`
+- Postgres 14+ with `pgvector >= 0.8.0` and `pg_trgm` (tested on PG 16 and PG 18.4)
 - Python 3.8+ with `psycopg2` installed (`pip install psycopg2-binary`)
 - Bash 4+ (for the shell harnesses; macOS default bash 3.2 may need `gnu-coreutils`)
 - A throwaway database (the harnesses create + drop schemas in it):
 
 ```bash
 createdb test_postgres_ai_agent
-psql -d test_postgres_ai_agent -c 'CREATE EXTENSION vector; CREATE EXTENSION pg_trgm;'
+
+# pgvector is NOT a "trusted" extension on most Linux distros, so CREATE EXTENSION
+# requires superuser. pg_trgm is usually trusted.
+sudo -u postgres psql -d test_postgres_ai_agent -c 'CREATE EXTENSION vector;'
+psql -d test_postgres_ai_agent -c 'CREATE EXTENSION pg_trgm;'
+
 export PG_DSN="dbname=test_postgres_ai_agent host=/var/run/postgresql"
 ```
 
@@ -93,9 +98,12 @@ Times three retrieval modes against the same seed corpus:
 | `hybrid_rrf` | `ops_search_agent.hybrid_rrf_search` three-leg RRF |
 | `hybrid_rrf_with_rerank` | Hybrid RRF top-100 + stubbed 200 ms cross-encoder pass |
 
-For each mode, runs each labelled query N times (default 30 timed iterations + 3 warmup), reports per-mode p50 / p95 / max in milliseconds, and compares against the per-mode budget in `BUDGET_MS` near the top of the script.
+For each mode, runs each labelled query N times (default 30 timed iterations + 3 warmup), reports per-mode p50 / p95 / max in milliseconds, and compares against **two budget layers in parallel** (both must hold for PASS):
 
-The budget is calibrated to the seed corpus (20 rows). For production-scale validation, run a second pass against a real corpus with `--dsn` pointing at the production database. The script will still work but the absolute numbers will be larger; budget enforcement should be tuned to the deployment scale.
+- `BUDGET_FLOOR_MS` -- fixture-scaled. Catches seed-corpus regressions (e.g., dropping the GIN tsvector index bumps `hybrid_rrf` p95 from ~1ms to ~3ms; the floor catches it).
+- `BUDGET_CEILING_MS` -- PLAYBOOK Section 12 production scale (2M-10M rows). Catches gross structural failures (HNSW missing, planner choosing seq scan, etc.) regardless of fixture size.
+
+Both layers are defined at the top of `latency_benchmark.py`. The aggregate p50/p95/max across 180 samples (30 iters * 6 queries) are SLI-grade (~1% CI); the per-query p50/p95/max from 30 samples are eyeball-grade (~3% CI). Raise `--iterations 100` to tighten per-query precision when needed.
 
 Confidence grade on the rerank stub: C. The cross-encoder is not yet implemented (MCP scaffolding deferred per `HANDOFFS/BUILD_PROTOCOL.md` "Out of scope"). The stub uses a 200 ms `time.sleep()` to represent the BGE-reranker-v2-m3 cost cited in `PLAYBOOK.md` Section 5.3. When the MCP rerank tool is built, replace the `time.sleep(0.200)` with an HTTP call to the deployed endpoint.
 
@@ -111,15 +119,15 @@ Available flags:
 Exit codes:
 
 ```
-0    all modes within budget
+0    all modes within both floor + ceiling budgets
 1    one or more modes exceeded budget (regression)
-2    setup error (missing function, missing fixture, missing HNSW index)
+2    setup error (missing function/fixture/HNSW/GIN tsvector/GIN trgm; non-MATERIALIZED CTE legs)
 ```
 
 ## Sample human-readable output
 
 ```
-preflight PASS: function + fixture + HNSW + chunk count OK
+preflight PASS: function + fixture + HNSW + GIN(tsv) + GIN(trgm) + chunk count + plan shape OK
 benchmarking vector_only ...
 benchmarking hybrid_rrf ...
 benchmarking hybrid_rrf_with_rerank ...
@@ -130,27 +138,27 @@ Latency benchmark report
 vector_only
   iterations/query: 30; warmup/query: 3
   samples (across 6 queries): 180
-  p50:   0.85 ms  (budget    8.0 ms)
-  p95:   1.42 ms  (budget   30.0 ms)
-  max:   2.10 ms  (budget  100.0 ms)
+  p50:   0.85 ms  (floor    1.0 / ceiling    8.0 ms)
+  p95:   1.42 ms  (floor    3.0 / ceiling   30.0 ms)
+  max:   2.10 ms  (floor   10.0 / ceiling  100.0 ms)
   min:   0.62 ms
     q1 pure civil-rights vector + keyword         p50=  0.82  p95=  1.40  max=  2.10
     [...]
 
 hybrid_rrf
   iterations/query: 30; warmup/query: 3
-  samples: 180
-  p50:   3.12 ms  (budget   40.0 ms)
+  samples (across 6 queries): 180
+  p50:   3.12 ms  (floor    5.0 / ceiling   40.0 ms)
   [...]
 
 hybrid_rrf_with_rerank
   iterations/query: 30; warmup/query: 3
-  samples: 180
-  p50: 203.45 ms  (budget  340.0 ms)
+  samples (across 6 queries): 180
+  p50: 203.45 ms  (floor  230.0 / ceiling  340.0 ms)
   [...]
 
 ==============================================================================
-RESULT: PASS (all modes within budget)
+RESULT: PASS (all modes within both floor + ceiling budgets)
 ```
 
 ## How the three harnesses fit together
@@ -216,17 +224,21 @@ Walk through `tests/recall_benchmark.sql`'s `recall_results` temp table to find 
 
 Most likely causes, in descending order of frequency:
 
-1. The HNSW index was deleted or never built -- `vector_only` falls to sequential scan and p95 explodes.
-2. `MATERIALIZED` removed from `scripts/05` CTE legs -- the planner folds the legs and `hybrid_rrf` runs the vector leg twice.
-3. The GIN index on `content_tsv` was dropped -- the FTS leg falls to sequential scan.
-4. The Python `psycopg2` connection has SSL renegotiation enabled -- check the DSN.
+1. The HNSW index was deleted or never built -- `vector_only` falls to sequential scan and p95 explodes. Caught by preflight Check 3.
+2. `MATERIALIZED` removed from `scripts/05` CTE legs -- the planner folds the legs, duplicating leg work and defeating recall on the iterative scan. Caught by preflight Check 7 (function source inspection -- counts `AS MATERIALIZED` tokens in `pg_get_functiondef`).
+3. The GIN index on `content_tsv` was dropped -- the FTS leg falls to sequential scan. Caught by preflight Check 4.
+4. The pg_trgm GIN index was dropped -- the trgm leg falls to sequential scan. Caught by preflight Check 5.
+5. The Python `psycopg2` connection includes SSL parameters that trigger renegotiation -- only relevant if your DSN includes `sslmode=...`; the local Unix-socket DSN in the prereqs does not negotiate SSL.
 
-The first three are caught by `tests/sync_check.sh --live`; the fourth is environmental.
+Causes 1-4 surface as preflight FAILs (exit 2) BEFORE the timed loop runs, so a budget breach (exit 1) on a passing preflight points at production-scale drift or environment.
 
-## Open work (Phase 4b + Phase 5)
+## Open work (Phase 5 + future)
 
-- **Strict sync_check Check 2**: extract every `name =>` from `SKILL.md` and assert each name is in `scripts/05_hybrid_rrf_search.sql`'s parameter list. Currently the check is permissive (named-arg style passes regardless of argument names).
-- **Larger latency corpus**: 20-row fixture is enough to detect structural regressions but not for production-scale percentiles. A second harness against ~10K real chunks would close the gap.
-- **Rerank endpoint integration**: replace the `time.sleep(0.200)` stub in `latency_benchmark.py` `run_hybrid_rrf_with_rerank_stub` with an HTTP call once the MCP `rerank` tool is built.
+- **Strict sync_check Check 2** (claude-1 slice): extract every `name =>` from `SKILL.md` and assert each name is in `scripts/05_hybrid_rrf_search.sql`'s parameter list. Currently the check is permissive (named-arg style passes regardless of argument names). Implementation outline lives in `HANDOFFS/09_claude1_redteam_tests.md`.
+- **Larger latency corpus**: 20-row fixture is enough to detect structural regressions but not for production-scale percentiles. A second harness against ~10K real chunks would close the gap. The two-layer budget (floor + ceiling) defers but does not eliminate the need for a real-corpus harness.
+- **Larger recall corpus** (claude-1 slice): the 20-chunk seed lets broken cluster members rank in top-10 by elimination; `tests/fixtures/seed_corpus.sql` should scale to >= 100 chunks with structured distractors. Documented in `HANDOFFS/10_claude2_redteam_tests.md`.
+- **NULL fts_rank / trgm_rank diagnosis** (claude-1 slice): in the current recall harness, the FTS and pg_trgm legs of `hybrid_rrf_search` return NULL for every test query, making the recall test effectively vector-only. Root-cause + fix is owned by the code slice.
+- **Rerank endpoint integration**: replace the `time.sleep(0.200)` stub in `latency_benchmark.py` `run_hybrid_rrf_with_rerank_stub` with an HTTP call once the MCP `rerank` tool is built. The stub is corpus-size-independent by design (200ms regardless of candidate count); the real endpoint will scale with count.
 - **CI wiring**: none of the three harnesses currently runs in CI. When a CI service is added, the order is `sync_check.sh -> run_recall.sh -> latency_benchmark.py` with each gate blocking merge on failure.
-- **Per-query rerank validation**: the rerank mode currently retrieves 100 candidates per query but does not validate that the cross-encoder would actually reorder them. When the real BGE endpoint is wired, add a recall@10 check post-rerank to confirm the reorder improves precision.
+- **Per-query rerank validation** (joint claude-1 + claude-2): the rerank mode currently retrieves 100 candidates per query but does not validate that the cross-encoder would actually reorder them. When the real BGE endpoint is wired, add a recall@10 check post-rerank to confirm the reorder improves precision. Touches both slices: recall logic + post-rerank latency path.
+- **Optional `--explain` mode for `latency_benchmark.py`** (claude-2 slice): dump `EXPLAIN (ANALYZE, BUFFERS)` for each mode to surface why perf changed. Defer unless useful in practice.
