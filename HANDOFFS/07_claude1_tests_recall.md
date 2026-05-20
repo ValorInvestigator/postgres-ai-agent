@@ -148,7 +148,7 @@ The exact recall numbers depend on how HNSW + GIN handle the small synthetic cor
 
 ## Commits landed this phase
 
-- `<commit-sha-to-fill>  phase4a: claude-1 recall harness + sync_check static gate`
+- `c1d7c96  phase4a: claude-1 recall harness + sync_check static gate`
 
 ## Open questions / deferred
 
