@@ -202,7 +202,7 @@ This passes after main merges both branches (because at that point SKILL.md uses
 
 ## Commits landed this phase
 
-- `(to fill after commit)  phase4b: claude-1 red-team of claude-2 tests (latency_benchmark + README)`
+- `ab873db  phase4b: claude-1 red-team of claude-2's latency_benchmark + tests/README`
 
 ## Open questions / deferred
 
