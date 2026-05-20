@@ -1,12 +1,32 @@
--- 04_comment_on_workhorses.sql
+-- 04_comment_on_workhorses.example.sql
 -- Per PLAYBOOK Section 0 Move 3 + Section 7
 -- Confidence grade: A (pg_description is core Postgres; agents demonstrably use it)
+--
+-- *** EXAMPLE / REFERENCE TEMPLATE -- DO NOT RUN UNMODIFIED ***
 --
 -- Adds COMMENT ON metadata for the four workhorse schemas + their key tables/columns.
 -- Agents reading pg_description write drastically better SQL on first try.
 --
--- This script targets the Valor-specific four workhorse schemas. For your deployment,
--- adapt the schema names to your case_* / corpus_* targets.
+-- This script is preserved here as a worked-example template using Valor's specific
+-- schema names (case_26cv11493, case_bingaman_dhs, ops_gmail, etc). Running it
+-- unmodified will ABORT on the first COMMENT ON for a schema/table that does not
+-- exist on your cluster. That is intentional: it forces you to adapt the comments
+-- to your own deployment.
+--
+-- HOW TO ADAPT
+--   1. Copy this file to scripts/04_comment_on_workhorses.sql (your local working copy).
+--   2. Replace each schema/table name with your case_*/corpus_*/legal_* schemas.
+--   3. Rewrite each COMMENT ON ... IS '...' string to describe YOUR data.
+--   4. Run: psql -d <your_db> -f scripts/04_comment_on_workhorses.sql
+--
+-- WHAT MAKES A GOOD COMMENT
+--   * Schema-level: what corpus is this, what model + dim, what file count / chunk count.
+--   * Table-level: row count, key indexes, join keys.
+--   * Column-level: index type, units, format, gotchas (timestamp epoch units, array
+--     conventions, normalization status, casing).
+--
+-- Agents read these via pg_description / \d+. See PLAYBOOK Section 7 for the full
+-- pattern + a worked retrieval evaluation showing the recall lift.
 
 -- ============================================================================
 -- case_26cv11493 (refile-prep evidence)
