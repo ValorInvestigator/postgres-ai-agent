@@ -5,12 +5,14 @@
 **Scope:** valor_consolidated Postgres 16, pgvector 0.8.2, pg_trgm, uuid-ossp; 37 schemas; ~2.4M chunks today; growing
 **Style:** No em dashes. No emojis. Hedged where unverified.
 
-This document is the synthesis of four parallel deep-research waves (vector indexing, ingestion pipeline, schema design, agent retrieval). The full per-wave findings remain as authoritative references at:
+This document is the synthesis of four parallel deep-research waves (vector indexing, ingestion pipeline, schema design, agent retrieval). The full per-wave findings remain as authoritative references. Original generation locations (preserved here for source traceability):
 
 - `/mnt/linux-storage/research/waves/postgres_ai_vector_index.md`
 - `/mnt/linux-storage/research/waves/postgres_ai_ingest_pipeline.md`
 - `/mnt/linux-storage/research/waves/postgres_ai_schema_design.md`
 - `/mnt/linux-storage/research/waves/postgres_ai_agent_retrieval.md`
+
+Committed copies inside this skill repo: `references/waves/wave_1_vector_index.md`, `wave_2_ingest_pipeline.md`, `wave_3_schema_design.md`, `wave_4_agent_retrieval.md`.
 
 Confidence grades: **A** = pgvector/Postgres docs or peer-reviewed paper, **B** = vendor blog (Supabase / Anthropic / Voyage / Tiger / Crunchy / Neon), **C** = synthesis or community pattern.
 
@@ -18,7 +20,7 @@ Confidence grades: **A** = pgvector/Postgres docs or peer-reviewed paper, **B** 
 
 ## 0. The Five Moves That Capture 90% of the Wins
 
-If Levi reads only this section, these five changes deliver almost all of the measurable lift. Order matters.
+If a reader reads only this section, these five changes deliver almost all of the measurable lift. Order matters.
 
 1. **Enable iterative HNSW scan on the agent role.** Without this, every WHERE-filtered vector query against `v_evidence_search` silently loses recall. One ALTER ROLE; impact is enormous. (A)
 2. **Replace single-leg vector retrieval with three-way RRF (vector + tsvector + pg_trgm) at k=60.** Anthropic measured a 49% retrieval-failure drop from hybrid; adding a reranker on top pushes it to 67%. (A)
@@ -662,7 +664,7 @@ CREATE TABLE IF NOT EXISTS ops_search_agent.query_log (
   tool_name       TEXT NOT NULL,
   args            JSONB NOT NULL,
   result_count    INTEGER,
-  result_chunk_ids TEXT[],
+  result_chunk_ids BIGINT[],  -- chunk_id is bigserial in the canonical schema (Section 2)
   latency_ms      INTEGER,
   cache_hit       BOOLEAN DEFAULT FALSE,
   rerank_used     BOOLEAN DEFAULT FALSE,

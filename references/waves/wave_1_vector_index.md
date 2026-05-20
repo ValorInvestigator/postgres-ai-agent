@@ -4,7 +4,7 @@
 **Target deployment:** Levi's `valor_consolidated` Postgres 16+, pgvector 0.8.2, pg_trgm, ~2.4M chunks across 37 schemas (case_*, corpus_*, ops_*, legal_*)
 **Consumer profile:** LLM agents are the primary (only) consumers -- recall floor must be high enough to surface exact citation chunks, not just thematically-close neighbors
 **Generated:** 2026-05-19
-**Confidence key:** A=primary source / pgvector README / Jonathan Katz benchmarks, B=vendor blog (Supabase, Tiger, Neon), C=secondary, D=unverified
+**Confidence key:** A=primary source / pgvector README / Jonathan Katz benchmarks, B=vendor blog (Supabase, Tiger, Neon), C=secondary or community pattern. (This wave was generated using an A/B/C/D rubric where D meant unverified; in Phase 3 of the verify-and-harden workflow the rubric is harmonized to the skill canonical A/B/C. Any items previously marked "(D)" in this file should be re-verified against a primary source before being relied on for a filing.)
 
 ---
 

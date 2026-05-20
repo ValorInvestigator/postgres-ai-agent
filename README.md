@@ -36,12 +36,12 @@ Every claim in the playbook is graded:
 
 See `SKILL.md` for the full layout. Quick orientation:
 
-- `SKILL.md` — Claude Code skill metadata + the five most-important moves
-- `references/PLAYBOOK.md` — 15-section consolidated playbook (~30KB)
-- `references/waves/` — the four authoritative wave reports + Gemini Pro supplements
-- `scripts/` — Phase 1 SQL ready to run against an existing PG cluster
-- `snippets/` — Python boilerplate (BigQuery auth, query logging wrapper)
-- `tests/` — regression harness (recall + latency benchmarks)
+- `SKILL.md` -- Claude Code skill metadata + the five most-important moves
+- `references/PLAYBOOK.md` -- consolidated playbook covering Section 0 (Five Moves) through Section 15 (Authoritative References)
+- `references/waves/` -- the four authoritative wave reports + Gemini Pro supplements (coverage is asymmetric: 7 for wave 4, 4 for wave 2, 1 for wave 1, 0 for wave 3)
+- `scripts/` -- Phase 1 SQL ready to run against an existing PG cluster
+- `snippets/` -- Python boilerplate (BigQuery auth, query logging wrapper)
+- `tests/` -- regression harness (recall + latency benchmarks); built in Phase 4 of the verify-and-harden workflow
 
 ## Installation
 
@@ -75,13 +75,15 @@ psql -d your_database -f scripts/05_hybrid_rrf_search.sql
 
 See `SKILL.md` "Quick-start" section for verification queries.
 
-## Tested against
+## Targeted deployment profile
 
-- Postgres 16 + pgvector 0.8.2 + pg_trgm + uuid-ossp
-- 37 schemas, ~2.4M chunks total
-- Single-box deployment (M.2 NVMe, 64GB RAM)
+This skill is designed for the following deployment shape. Patterns are validated against this profile; the regression harness in `tests/` (Phase 4) will provide automated verification. Numbers here describe the design target, not a passed CI run.
+
+- Postgres 16 + pgvector 0.8.2 + pg_trgm + uuid-ossp baseline
+- ~37 schemas, ~2.4M chunks total at current scale (designed to scale to 50M+)
+- Single-box deployment (M.2 NVMe, 64GB RAM) -- patterns work on larger boxes; this is the small-end of the supported range
 - Schema sizes from ~5K rows to ~238K rows
-- Single-application trust boundary (no RLS)
+- Single-application trust boundary (no RLS by design; see "What this skill does NOT cover")
 
 ## What this skill does NOT cover
 

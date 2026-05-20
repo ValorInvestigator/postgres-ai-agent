@@ -69,7 +69,7 @@ When reviewing the other slice, look for:
 - **Footguns in code** -- broken SQL (wrong schema names, missing extensions assumed), Python with missing imports, untestable functions, credentials risk in `snippets/bigquery_auth.py`
 - **Version assumptions** -- pgvector 0.8.2 and Postgres 16 baseline; does any script silently require newer features?
 - **Hidden invariants** -- embedding dimensions (the `vector(384)` in SKILL.md line ~105 vs whatever the scripts assume), halfvec usage, HNSW parameters
-- **Style rules** -- SKILL.md forbids em dashes; flag any
+- **Style rules** -- consistency of voice + clear technical writing. Em-dashes are NOT a violation in this skill repo (the "no em-dashes" rule applies only to Levi's personal written documents, not to redistributable skills; see `HANDOFFS/EM_DASH_RULE_CLARIFICATION.md` and the `feedback_em_dash_rule_scope` auto-memory).
 
 Every red-team finding must include `file:line`, severity (high/med/low), and a concrete suggested fix -- not just "this looks wrong."
 
