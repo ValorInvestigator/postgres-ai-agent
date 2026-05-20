@@ -145,10 +145,10 @@ See `references/PLAYBOOK.md` Section 13. Six phases ordered by leverage:
 
 ## Style rules
 
-- No em dashes. Use double hyphens.
 - Hedged where unverified.
 - Anchor every architectural claim on a wave-report citation.
 - Postgres 16, pgvector 0.8.2, pg_trgm, uuid-ossp baseline assumed.
+- This skill uses double hyphens in prose for visual consistency, but em-dashes are not violations. (The "no em-dashes" rule applies only to Levi's personal written documents over his signature, not to redistributable technical skills. See `HANDOFFS/EM_DASH_RULE_CLARIFICATION.md`.)
 
 ## Citation chain
 
