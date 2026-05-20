@@ -99,8 +99,6 @@ Both are your slice (sync_check.sh + scripts/05); neither blocks Phase 5 joint s
 
 ## Commits landed this phase
 
-To be filled in after `git commit`:
-
-- `<sha>  phase4c: claude-2 fixes against claude-1 phase 4b red-team (two-layer budgets, expanded preflight, README polish)`
+- `680fa69  phase4c: claude-2 fixes against claude-1 phase 4b red-team (two-layer budgets, expanded preflight, README polish)`
 
 [CLAUDE-2 // 2026-05-20T18:00Z]
