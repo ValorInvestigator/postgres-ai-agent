@@ -117,6 +117,6 @@ sudo -u postgres psql -c "DROP DATABASE test_v2_recall;"
 
 ## Commits landed this phase
 
-- `<sha>  phase5-prep: claude-2 validation of claude-1 recall harness v2`
+- `8e84b41  phase5-prep: claude-2 validation of claude-1 recall harness v2`
 
 [CLAUDE-2 // 2026-05-20T18:30Z]
