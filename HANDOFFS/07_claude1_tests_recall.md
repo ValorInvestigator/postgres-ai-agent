@@ -113,25 +113,58 @@ This is flagged in Open questions for Phase 5 sign-off.
 ## How to actually run the recall harness against a live PG
 
 ```bash
-# One-time: create a throwaway DB
+# One-time: create a throwaway DB (needs CREATEDB privilege)
 createdb test_postgres_ai_agent
-psql -d test_postgres_ai_agent -c 'CREATE EXTENSION vector; CREATE EXTENSION pg_trgm;'
+
+# Trusted extension via psql:
+psql -d test_postgres_ai_agent -c 'CREATE EXTENSION pg_trgm;'
+
+# Untrusted extension via superuser:
+sudo -u postgres psql -d test_postgres_ai_agent -c 'CREATE EXTENSION vector;'
 
 # Run
 PG_DSN="dbname=test_postgres_ai_agent host=/var/run/postgresql" \
     bash tests/run_recall.sh
 ```
 
-Expected output (last lines):
+## Actual live-run result against pgvector 0.8.2 + pg_trgm 1.6 on Postgres 18.4
+
 ```
+ qid | description                                      | relevant | hit | recall_at_10 | passed | returned_ids
+-----+--------------------------------------------------+----------+-----+--------------+--------+------------------------------
+   1 | pure civil-rights vector + keyword               |        6 |   6 |        1.000 | t      | {1,3,4,2,5,6,17,9,10,14}
+   2 | pure probate vector + keyword                    |        6 |   6 |        1.000 | t      | {7,11,12,8,10,9,6,5,14,2}
+   3 | pure medical vector + keyword                    |        6 |   6 |        1.000 | t      | {13,15,16,18,17,14,8,11,3,1}
+   4 | civil-rights paraphrase (no exact keyword)       |        6 |   6 |        1.000 | t      | {1,3,4,2,5,6,17,9,10,14}
+   5 | probate specific subtopic (letters testamentary) |        6 |   6 |        1.000 | t      | {8,7,11,12,10,9,6,5,14,2}
+   6 | medical specific subtopic (audit log)            |        6 |   6 |        1.000 | t      | {18,13,15,16,17,14,8,11,3,1}
+(6 rows)
+
  n_queries | n_passed | n_failed | mean_recall_at_10 | min_recall_at_10
 -----------+----------+----------+-------------------+------------------
-         6 |        6 |        0 |             0.... |            0....
-NOTICE:  recall_benchmark PASSED: mean_recall_at_10 = 0....
+         6 |        6 |        0 |             1.000 |            1.000
+
+NOTICE:  recall_benchmark PASSED: mean_recall_at_10 = 1
 [run_recall] PASS
 ```
 
-The exact recall numbers depend on how HNSW + GIN handle the small synthetic corpus; the per-query 0.80 / aggregate 0.90 thresholds are calibrated to be a regression detector, not a brag number.
+`sync_check.sh --live` also runs ALL CHECKS PASS against the same DB.
+
+The synthetic corpus is easy by design (3 well-separated clusters); 1.000 recall is fine for the smoke test that proves the pipeline works end-to-end. The 0.80/0.90 thresholds remain regression detectors -- they exist to catch the case where someone changes scripts/05 in a way that breaks retrieval. Phase 4b adversarial mutations will calibrate sensitivity.
+
+## Bugs that the live run actually exposed (real findings, not cosmetic)
+
+The live run-through caught three real bugs in scripts/01-02-05 that the static review missed. All three fixed in the commit alongside the recall harness:
+
+1. **scripts/01 ALTER ROLE hard-fail for non-superusers.** `ALTER ROLE x SET hnsw.iterative_scan = ...` requires superuser to set a custom GUC (or ALTER SYSTEM privilege). Non-privileged deploys died. **Fix:** wrap the ALTER ROLE in a DO block with `EXCEPTION WHEN insufficient_privilege` so the script emits a NOTICE explaining the SET fallback instead of dying. Bridge the `:'role'` psql variable into the DO block via a custom GUC `ai_iter.target_role` because psql does NOT substitute colon-variables inside dollar-quoted strings.
+
+2. **scripts/02 CREATE EVENT TRIGGER hard-fail for non-superusers.** Event triggers require superuser. Same `EXCEPTION WHEN insufficient_privilege` wrap; emits a NOTICE explaining auto-registration is OFF and the operator must INSERT into corpus_registry manually. The function `on_corpus_schema_created()` itself still exists, so a future superuser binding works without re-running scripts/02.
+
+3. **scripts/02 rebuild_v_evidence_search() leaves view missing on fresh DB.** When `corpus_registry` is empty (no case_*/corpus_*/legal_* schemas exist), the function skipped the CREATE VIEW; downstream `SELECT COUNT(*) FROM v_evidence_search` then died with "relation does not exist". **Fix:** always create the view, with an empty-result placeholder when no rows exist (`SELECT NULL::text..., ... WHERE false`).
+
+4. **scripts/05 rrf_score type mismatch.** Function declares `rrf_score double precision` but `COALESCE(1.0 / ($4 + rank), 0)` produces `numeric` (because `1.0` is a numeric literal in PG and `numeric / bigint = numeric`). RETURN QUERY threw "Returned type numeric does not match expected type double precision". **Fix:** cast the RRF numerator to `1.0::double precision` so the whole arithmetic chain stays in float8.
+
+These are pre-existing issues from the original scripts (not introduced in Phase 3) that nobody had caught because we hadn't run a fresh deploy on a non-superuser DB. Phase 4a's value is exactly this: live-run uncovers real footguns that static review misses.
 
 ## Asks of Claude 2 (for Phase 4b red-team)
 

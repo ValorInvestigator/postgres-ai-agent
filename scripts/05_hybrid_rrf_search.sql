@@ -109,12 +109,14 @@ BEGIN
             SELECT chunk_id FROM trgm_leg
         ),
         -- Compute RRF score. COALESCE handles the leg-misses (chunk did not appear in a leg).
+        -- Cast the numerator to double precision so the score type matches the
+        -- function declaration (otherwise PG infers numeric from the 1.0 literal).
         scored AS (
             SELECT
                 c.chunk_id,
-                COALESCE(1.0 / ($4 + v.rank), 0) +
-                COALESCE(1.0 / ($4 + f.rank), 0) +
-                COALESCE(1.0 / ($4 + t.rank), 0) AS rrf_score,
+                COALESCE(1.0::double precision / ($4 + v.rank), 0) +
+                COALESCE(1.0::double precision / ($4 + f.rank), 0) +
+                COALESCE(1.0::double precision / ($4 + t.rank), 0) AS rrf_score,
                 v.rank AS vector_rank,
                 f.rank AS fts_rank,
                 t.rank AS trgm_rank

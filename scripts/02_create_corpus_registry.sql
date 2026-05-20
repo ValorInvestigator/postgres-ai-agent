@@ -115,15 +115,29 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- Drop existing view so projection changes (e.g. added embedding column) take effect
+    EXECUTE 'DROP VIEW IF EXISTS ops_search_agent.v_evidence_search';
     IF array_length(union_parts, 1) > 0 THEN
-        -- Drop existing view so projection changes (e.g. added embedding column) take effect
-        EXECUTE 'DROP VIEW IF EXISTS ops_search_agent.v_evidence_search';
         sql_text := 'CREATE VIEW ops_search_agent.v_evidence_search AS '
             || array_to_string(union_parts, ' UNION ALL ');
         EXECUTE sql_text;
-        COMMENT ON VIEW ops_search_agent.v_evidence_search IS
-          'Cross-corpus search view. Auto-rebuilt from corpus_registry by rebuild_v_evidence_search() and the corpus_schema_created event trigger. Use schema_name to disambiguate when filtering. All included corpora must share the same embedding type.';
+    ELSE
+        -- No registered corpora yet: create an empty placeholder view so
+        -- downstream code that expects v_evidence_search to exist still works.
+        -- Cast literals so PG can infer column types without rows.
+        EXECUTE $emp$
+            CREATE VIEW ops_search_agent.v_evidence_search AS
+            SELECT
+                NULL::text   AS schema_name,
+                NULL::bigint AS chunk_id,
+                NULL::text   AS content,
+                NULL::vector AS embedding,
+                NULL::text   AS embedding_model
+            WHERE false
+        $emp$;
     END IF;
+    COMMENT ON VIEW ops_search_agent.v_evidence_search IS
+      'Cross-corpus search view. Auto-rebuilt from corpus_registry by rebuild_v_evidence_search() and the corpus_schema_created event trigger. Use schema_name to disambiguate when filtering. All included corpora must share the same embedding type.';
 END;
 $$;
 
@@ -173,15 +187,29 @@ $$;
 COMMENT ON FUNCTION ops_search_agent.on_corpus_schema_created IS
   'Event-trigger callback. Fires on CREATE SCHEMA; auto-registers schemas matching case_*/corpus_*/legal_* and rebuilds v_evidence_search. Set in_evidence_search = false on the new row to opt out post-hoc.';
 
--- Drop + recreate the trigger so re-runs of this script update the callback target
-DROP EVENT TRIGGER IF EXISTS corpus_schema_created;
-CREATE EVENT TRIGGER corpus_schema_created
-    ON ddl_command_end
-    WHEN TAG IN ('CREATE SCHEMA')
-    EXECUTE FUNCTION ops_search_agent.on_corpus_schema_created();
-
-COMMENT ON EVENT TRIGGER corpus_schema_created IS
-  'Auto-registers new case_*/corpus_*/legal_* schemas into ops_search_agent.corpus_registry and rebuilds v_evidence_search. Disable temporarily with ALTER EVENT TRIGGER corpus_schema_created DISABLE;';
+-- Drop + recreate the trigger so re-runs of this script update the callback target.
+-- CREATE EVENT TRIGGER requires superuser. We wrap it so a non-superuser
+-- deploy still completes -- the function above exists either way; only the
+-- automatic CREATE SCHEMA hook is lost, and the operator can INSERT into
+-- corpus_registry manually + call rebuild_v_evidence_search() themselves.
+DO $$
+BEGIN
+    EXECUTE 'DROP EVENT TRIGGER IF EXISTS corpus_schema_created';
+    EXECUTE 'CREATE EVENT TRIGGER corpus_schema_created '
+            'ON ddl_command_end WHEN TAG IN (''CREATE SCHEMA'') '
+            'EXECUTE FUNCTION ops_search_agent.on_corpus_schema_created()';
+    EXECUTE 'COMMENT ON EVENT TRIGGER corpus_schema_created IS '
+            '''Auto-registers new case_*/corpus_*/legal_* schemas into '
+            'ops_search_agent.corpus_registry and rebuilds v_evidence_search. '
+            'Disable temporarily with ALTER EVENT TRIGGER corpus_schema_created DISABLE;''';
+    RAISE NOTICE 'Event trigger corpus_schema_created installed; new CREATE SCHEMA will auto-register.';
+EXCEPTION
+    WHEN insufficient_privilege THEN
+        RAISE NOTICE 'CREATE EVENT TRIGGER blocked: current user lacks superuser privilege. '
+                     'on_corpus_schema_created() function still exists but auto-registration is OFF. '
+                     'Either rerun as a superuser, OR INSERT each new corpus into '
+                     'ops_search_agent.corpus_registry manually and call rebuild_v_evidence_search().';
+END $$;
 
 -- Build the view now from any backfilled rows
 SELECT ops_search_agent.rebuild_v_evidence_search();

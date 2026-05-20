@@ -54,7 +54,39 @@ WHERE extname = 'vector';
 \else
   \set role valor_agent
 \endif
-ALTER ROLE :"role" SET hnsw.iterative_scan = 'relaxed_order';
+
+-- Bridge the psql :'role' client-side variable into the server-side DO block
+-- via a transient custom GUC. Custom GUCs in a namespaced "x.y" form are
+-- settable session-locally by any role; they do NOT require superuser.
+SET ai_iter.target_role = :'role';
+
+-- ALTER ROLE on a custom GUC (hnsw.*) requires either superuser or ALTER
+-- SYSTEM privilege (PG 15+). Non-privileged roles hit "permission denied to
+-- set parameter". We wrap the ALTER ROLE in an EXCEPTION handler so the
+-- deploy completes with a NOTICE instead of dying -- the operator then uses
+-- the per-session SET fallback below.
+DO $do$
+DECLARE
+    target_role text := current_setting('ai_iter.target_role');
+BEGIN
+    EXECUTE format('ALTER ROLE %I SET hnsw.iterative_scan = %L',
+                   target_role, 'relaxed_order');
+    RAISE NOTICE
+      'hnsw.iterative_scan = relaxed_order applied at role level for "%". Reconnect to pick up.',
+      target_role;
+EXCEPTION
+    WHEN insufficient_privilege THEN
+        RAISE NOTICE
+          'ALTER ROLE blocked: current user lacks privilege to set hnsw.iterative_scan for "%". '
+          'Either rerun this script as a superuser, OR add '
+          'SET hnsw.iterative_scan = ''relaxed_order''; '
+          'to each agent session (or SET LOCAL inside the agent transaction).',
+          target_role;
+    WHEN undefined_object THEN
+        RAISE EXCEPTION
+          'Role "%" does not exist. Pass -v role=<existing-role>.', target_role;
+END
+$do$;
 
 -- Session-level alternative (run on each connection):
 --   SET hnsw.iterative_scan = 'relaxed_order';
