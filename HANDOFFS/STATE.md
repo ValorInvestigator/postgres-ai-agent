@@ -27,7 +27,7 @@ Both Claudes should incorporate these into their Phase 1 audit:
 
 ## Handoffs landed
 
--  (Phase 1, code slice, claude-1) -- landed 2026-05-20T08:15Z. 19 findings (5 high, 8 med, 6 low) + 4 asks of claude-2.
+- `01_claude1_audit.md` (Phase 1, code slice, claude-1) -- landed 2026-05-20T08:15Z. 19 findings (5 high, 8 med, 6 low) + 4 asks of claude-2.
 
 ## Active branches
 
