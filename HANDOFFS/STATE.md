@@ -8,7 +8,7 @@
 
 | Phase | Claude 1 handoff | Claude 2 handoff | Status |
 |-------|------------------|------------------|--------|
-| 1 -- Audit own slice | `01_claude1_audit.md` | `02_claude2_audit.md` | in progress |
+| 1 -- Audit own slice | [DONE] `01_claude1_audit.md` | `02_claude2_audit.md` | claude-1 done; waiting on claude-2 |
 | 2 -- Red-team the other | `03_claude1_redteam_of_claude2.md` | `04_claude2_redteam_of_claude1.md` | pending |
 | 3 -- Fix own slice | `05_claude1_fixes.md` | `06_claude2_fixes.md` | pending |
 | 4a -- Build tests harness | `07_claude1_tests_recall.md` | `08_claude2_tests_latency.md` | pending |
@@ -27,7 +27,7 @@ Both Claudes should incorporate these into their Phase 1 audit:
 
 ## Handoffs landed
 
-(none yet)
+-  (Phase 1, code slice, claude-1) -- landed 2026-05-20T08:15Z. 19 findings (5 high, 8 med, 6 low) + 4 asks of claude-2.
 
 ## Active branches
 
